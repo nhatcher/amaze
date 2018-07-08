@@ -1,0 +1,40 @@
+#main-canvas {
+    position: absolute;
+    left: 20px;
+    top: 30px;
+}
+
+#instructions {
+    position: absolute;
+    left: 18px;
+    top: 28px;
+    width: 800px;
+    height: 600px;
+    /* background: aquamarine; */
+    text-align: center;
+    border: 2px solid #cccccc;
+}
+
+
+#instructions h1 {
+    text-transform: capitalize;
+}
+
+#instructions buttom {
+    padding: 10px;
+    border: 1px solid #ccc;
+    background: #f2f2f2;
+    border-radius: 5px;
+    cursor: pointer;
+    margin-top: 50px;
+    display: inline-block;
+}
+
+#instructions > div {
+    display: inline-block;
+    background: #cccccc;
+    margin-top: 40px;
+    padding: 20px;
+    opacity: 0.8;
+    max-width: 400px;
+}
