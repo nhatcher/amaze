@@ -27,7 +27,7 @@ const labyrinth = (function () {
             setTimeout(keepMoving, 100);
         };
         if (window.innerWidth>850) {
-            arrows.style.visibility = 'hidden';
+            arrows.style.display = 'none';
         } 
 
         greeting();
@@ -74,6 +74,7 @@ const labyrinth = (function () {
             return;
         }
         processEvent(event.key);
+        event.preventDefault();
     }, false);
     let sLastArrow = '';
 
