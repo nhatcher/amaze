@@ -15,6 +15,21 @@ const labyrinth = (function () {
         canvasHeight = _canvasHeight;
         var canvas = document.getElementById(id);
         ctx = canvas.getContext('2d');
+        let arrows = document.getElementById('arrow-keys');
+        arrows.onclick = function(event) {
+            let htDistpatch = {
+                'up-key': 'ArrowUp',
+                'down-key': 'ArrowDown',
+                'left-key': 'ArrowLeft',
+                'right-key': 'ArrowRight'
+            };
+            processEvent(htDistpatch[event.target.id]);
+            setTimeout(keepMoving, 100);
+        };
+        if (window.innerWidth>850) {
+            arrows.style.visibility = 'hidden';
+        } 
+
         greeting();
     }
     module.start = start;
@@ -23,19 +38,55 @@ const labyrinth = (function () {
         ctx.clearRect(0, 0, canvasWidth, canvasHeight);
     }
 
+    function keepMoving() {
+        // If there is only one position to go moves to that position
+        let hwalls = maze.hwalls;
+        let vwalls = maze.vwalls;
+        let M = vwalls.length;
+        let N = hwalls.length;
+        let hits = 0;
+        let sNext = '';
+        if (user_y !== 0 && !hwalls[user_x][user_y-1] && sLastArrow !== 'ArrowDown') {
+            hits++;
+            sNext = 'ArrowUp';
+        }
+        if (user_y !== M-1 && !hwalls[user_x][user_y] && sLastArrow !== 'ArrowUp') {
+            hits++;
+            sNext = 'ArrowDown';
+        }
+        if (user_x !== N-1 && !vwalls[user_y][user_x] && sLastArrow !== 'ArrowLeft') {
+            hits++;
+            sNext = 'ArrowRight';
+        }
+        if (user_x !== 0 && !vwalls[user_y][user_x-1] && sLastArrow !== 'ArrowRight') {
+            hits++;
+            sNext = 'ArrowLeft';
+        }
+        if (hits === 1) {
+            processEvent(sNext);
+            setTimeout(keepMoving, 100)
+        }
+
+    }
+
     document.addEventListener('keydown', (event) => {
         if (!playing) {
             return;
         }
+        processEvent(event.key);
+    }, false);
+    let sLastArrow = '';
+
+    function processEvent(sEventName) {
         let hwalls = maze.hwalls;
         let vwalls = maze.vwalls;
         let M = vwalls.length;
         let N = hwalls.length;
         clearLittleGuy();
-        switch(event.key) {
+        sLastArrow = sEventName;
+        switch(sEventName) {
             case 'ArrowUp':
                 if (user_y !== 0 && !hwalls[user_x][user_y-1]) {
-
                     user_y--;
                 }
             break;
@@ -67,7 +118,7 @@ const labyrinth = (function () {
         if (user_x === N-1 && user_y === M-1) {
             nextLevel();
         }
-    }, false);
+    };
 
     function startGame() {
         user_x = 0;

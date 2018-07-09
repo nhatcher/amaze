@@ -1,3 +1,4 @@
+
 #main-canvas {
     position: absolute;
     left: 20px;
@@ -38,3 +39,81 @@
     opacity: 0.8;
     max-width: 400px;
 }
+
+#arrow-keys {
+    position: absolute;
+    left: 220px;
+    top: 640px;
+    width: 400px;
+    height: 400px;
+    background-color: #f0f0f0;
+    border-radius: 200px;
+}
+
+#arrow-keys div {
+    position: absolute;
+}
+
+#up-key {
+    width: 0;
+    height: 0;
+    left: 140px;
+    border-left: 60px solid transparent;
+    border-right: 60px solid transparent;
+    border-bottom: 120px solid #aaaaaa;
+}
+
+#down-key {
+    top: 280px;
+    left: 140px;
+    width: 0;
+    height: 0;
+    border-left: 60px solid transparent;
+    border-right: 60px solid transparent;
+    border-top: 120px solid #aaaaaa;
+}
+
+
+#right-key {
+    top: 140px;
+    left: 280px;
+    width: 0;
+    height: 0;
+    border-top: 60px solid transparent;
+    border-bottom: 60px solid transparent;
+    border-left: 120px solid #aaaaaa;
+}
+
+#left-key {
+    top: 140px;
+    left: 0px;
+    width: 0;
+    height: 0;
+    border-top: 60px solid transparent;
+    border-bottom: 60px solid transparent;
+    border-right: 120px solid #aaaaaa;
+}
+
+
+/* #arrow-keys i.right {
+    top: 75px;
+    left: 130px;
+    transform: rotate(135deg);
+}
+
+#arrow-keys i.left {
+    top: 75px;
+    left: 20px;
+    transform: rotate(-45deg);
+}
+
+#arrow-keys i.up {
+    top: 20px;
+    left: 75px;
+    transform: rotate(45deg);
+}
+#arrow-keys i.down {
+    top: 130px;
+    left: 75px;
+    transform: rotate(-135deg);
+} */
