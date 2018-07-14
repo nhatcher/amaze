@@ -3,12 +3,47 @@ const labyrinth = (function () {
     let ctx;
     let canvasWidth,
         canvasHeight;
-    let maze;
+
     let playing = false;
+
+    // data
+    let maze;
     let user_x, user_y;
     let dx, dy;
     let level;
     let mode;
+
+    function loadData() {
+        if (localStorage.key('data')) {
+            let data = JSON.parse(localStorage.getItem('data'));
+            maze = data.maze;
+            level = data.level;
+            user_x = data.user_x;
+            user_y = data.user_y;
+            let opts = changeMode(level);
+            dx = canvasWidth/opts.N;
+            dy = canvasHeight/opts.M;
+        } else {
+            level = 1;
+            user_x = 0;
+            user_y = 0;
+            let opts = changeMode(level);
+            dx = canvasWidth/opts.N;
+            dy = canvasHeight/opts.M;
+            createLabyrinth(opts.N, opts.M);
+        }
+    }
+
+    function saveData() {
+        // level, maze, user_x, user_y
+        let data = {
+            maze: maze,
+            level: level,
+            user_x: user_x,
+            user_y: user_y
+        }
+        localStorage.setItem('data', JSON.stringify(data));
+    }
 
     function start(id, _canvasWidth, _canvasHeight) {
         canvasWidth = _canvasWidth;
@@ -28,14 +63,44 @@ const labyrinth = (function () {
         };
         if (window.innerWidth>850) {
             arrows.style.display = 'none';
-        } 
-
+        }
+        playing = false;
+        loadData();
         greeting();
     }
     module.start = start;
 
     function cleardevice() {
         ctx.clearRect(0, 0, canvasWidth, canvasHeight);
+    }
+
+    function resetGame() {
+        level = 1;
+        user_x = 0;
+        user_y = 0;
+        let opts = changeMode(level);
+        dx = canvasWidth/opts.N;
+        dy = canvasHeight/opts.M;
+        createLabyrinth(opts.N, opts.M);
+        localStorage.removeItem('data');
+        playing = false;
+        greeting();
+    }
+
+    function pauseGame() {
+        let instructions = document.getElementById('instructions');
+        instructions.innerHTML = `<div><h1>Pause</h1>
+        <p>Your game is paused. You can close your window and keep playing at a later time</p>
+        <div><buttom id="game-start">Continue playing</buttom></div>
+        </div>
+        `;
+        let game_start = document.getElementById('game-start');
+        playing = false;
+        game_start.onclick = function() {
+            instructions.innerHTML = '';
+            playing = true;
+        }
+
     }
 
     function keepMoving() {
@@ -71,10 +136,16 @@ const labyrinth = (function () {
 
     document.addEventListener('keydown', (event) => {
         if (!playing) {
+            if (event.key === 'Enter') {
+                // hacky!
+                document.getElementById('game-start').click();
+            }
             return;
         }
         processEvent(event.key);
-        event.preventDefault();
+        if (['ArrowUp', 'ArrowDown', 'ArrowRight', 'ArrowUp'].includes(event.key)) {
+            event.preventDefault();
+        }
     }, false);
     let sLastArrow = '';
 
@@ -111,8 +182,18 @@ const labyrinth = (function () {
                 user_x = N-1;
                 user_y = M-1;
             break
+            case 'Enter':
+                // pass
+            break;
+            case 'Escape':
+                resetGame();
+            break;
+            case ' ':
+                saveData();
+                pauseGame();
+            break;
             default:
-                console.log(event.key)
+                console.log('Key pressed: ', sEventName);
             break;
         }
         drawLittleGuy();
@@ -122,17 +203,16 @@ const labyrinth = (function () {
     };
 
     function startGame() {
-        user_x = 0;
-        user_y = 0;
-        drawLittleGuy();
         playing = true;
+        drawLittleGuy();
     }
+
     function clearLittleGuy() {
         ctx.strokeStyle = '#fff';
         ctx.fillStyle = '#fff';
         ctx.beginPath();
         ctx.fillRect(user_x*dx+1, user_y*dy+1, dx-2, dy-2);
-        
+
         if (mode === 2) {
             // probably a bit too much :/
             cleardevice();
@@ -377,9 +457,16 @@ const labyrinth = (function () {
         <div><buttom id="game-start">Next Level</buttom></div>
         </div>`;
         let game_start = document.getElementById('game-start');
+
         game_start.onclick = function() {
             instructions.innerHTML = '';
             level++;
+            user_x = 0;
+            user_y = 0;
+            let opts = changeMode(level);
+            dx = canvasWidth/opts.N;
+            dy = canvasHeight/opts.M;
+            createLabyrinth(opts.N, opts.M);
             playGame();
         }
 
@@ -391,26 +478,19 @@ const labyrinth = (function () {
         <p>You should move the little guy (small circle) in the upper left of the maze all to the way out in the lower right corner.
         </p>
         <p>You should use the arrow keys in your keyboard</p>
-        <p>Go to level 1!</p>
+        <p>Go to level ${level}!</p>
+        <p>Press "space bar" to pause and save the game and "escape" to reset</p>
         <div><buttom id="game-start">Start</buttom></div>
         </div>
         `;
         let game_start = document.getElementById('game-start');
         game_start.onclick = function() {
             instructions.innerHTML = '';
-            level = 1;
             playGame();
         }
     }
 
     function playGame() {
-        let levelPoints = 1;
-
-        let opts = changeMode(level);
-        dx = canvasWidth/opts.N;
-        dy = canvasHeight/opts.M;
-
-        createLabyrinth(opts.N, opts.M);
         drawMaze();
         startGame();
     }
