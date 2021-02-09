@@ -1,7 +1,7 @@
 A MAZE
 ======
 
-This is a simple maze game. You can play it here <https://theuniverse.today/amaze/>.
+This is a simple maze game. You can play it here <https://nhatcher.github.io/amaze/>.
 
 This is a javascript/HTML port of a very old game I did in C back in ~1990.
 
