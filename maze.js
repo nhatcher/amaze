@@ -400,7 +400,6 @@ function createLabyrinth(N, M) {
       y = sq.y;
     } else {
       let bMoved = false;
-      const a = 0;
       while (!bMoved) {
         const iDirection = Math.floor(Math.random() * 4);
         switch (iDirection) {
@@ -458,9 +457,9 @@ function nextLevel() {
         </p>
         <div><buttom id="game-start">Next Level</buttom></div>
         </div>`;
-  const game_start = document.getElementById('game-start');
+  const gameStartButton = document.getElementById('game-start');
 
-  game_start.onclick = function () {
+  gameStartButton.onclick = () => {
     instructions.innerHTML = '';
     level++;
     userX = 0;
@@ -484,8 +483,8 @@ function greeting() {
         <div><buttom id="game-start">Start</buttom></div>
         </div>
         `;
-  const game_start = document.getElementById('game-start');
-  game_start.onclick = function () {
+  const gameStartButton = document.getElementById('game-start');
+  gameStartButton.onclick = () => {
     instructions.innerHTML = '';
     playGame();
   };
