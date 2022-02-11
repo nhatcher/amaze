@@ -11,10 +11,10 @@
     <meta http-equiv="Expires" content="0" />
 
     <link rel="stylesheet" type="text/css" media="screen" href="general.css" />
-    <script src="labyrinth.js"></script>
-    <script>
+    <script type="module">
+        import start from './maze.js';
         document.addEventListener("DOMContentLoaded", function(event) {
-            labyrinth.start('main-canvas', 800, 600);
+            start('main-canvas', 800, 600);
         });
     </script>
 </head>
