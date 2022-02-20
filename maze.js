@@ -1,267 +1,10 @@
-const module = {};
-let ctx;
-let canvasWidth;
-let canvasHeight;
+import createLabyrinth from './backtracker.js';
+import MazeCanvas from './mazeCanvas.js';
 
-let playing = false;
-
-// data
-let maze;
-let userX;
-let userY;
-let dx;
-let dy;
-let level;
-let mode;
-
-function loadData() {
-  if (localStorage.getItem('data')) {
-    const data = JSON.parse(localStorage.getItem('data'));
-    maze = data.maze;
-    level = data.level;
-    userX = data.user_x;
-    userY = data.user_y;
-    const opts = changeMode(level);
-    dx = canvasWidth / opts.N;
-    dy = canvasHeight / opts.M;
-  } else {
-    level = 1;
-    userX = 0;
-    userY = 0;
-    const opts = changeMode(level);
-    dx = canvasWidth / opts.N;
-    dy = canvasHeight / opts.M;
-    createLabyrinth(opts.N, opts.M);
-  }
-}
-
-function saveData() {
-  // level, maze, user_x, user_y
-  const data = {
-    maze,
-    level,
-    user_x: userX,
-    user_y: userY,
-  };
-  localStorage.setItem('data', JSON.stringify(data));
-}
-
-function start(id, _canvasWidth, _canvasHeight) {
-  canvasWidth = _canvasWidth;
-  canvasHeight = _canvasHeight;
-  const canvas = document.getElementById(id);
-  ctx = canvas.getContext('2d');
-  const arrows = document.getElementById('arrow-keys');
-  arrows.onclick = function (event) {
-    const htDistpatch = {
-      'up-key': 'ArrowUp',
-      'down-key': 'ArrowDown',
-      'left-key': 'ArrowLeft',
-      'right-key': 'ArrowRight',
-    };
-    processEvent(htDistpatch[event.target.id]);
-    setTimeout(keepMoving, 100);
-  };
-  if (window.innerWidth > 850) {
-    arrows.style.display = 'none';
-  }
-  playing = false;
-  loadData();
-  greeting();
-}
-module.start = start;
-
-function cleardevice() {
-  ctx.clearRect(0, 0, canvasWidth, canvasHeight);
-}
-
-function resetGame() {
-  level = 1;
-  userX = 0;
-  userY = 0;
-  const opts = changeMode(level);
-  dx = canvasWidth / opts.N;
-  dy = canvasHeight / opts.M;
-  createLabyrinth(opts.N, opts.M);
-  localStorage.removeItem('data');
-  playing = false;
-  greeting();
-}
-
-function pauseGame() {
-  const instructions = document.getElementById('instructions');
-  instructions.innerHTML = `<div><h1>Pause</h1>
-        <p>Your game is paused. You can close your window and keep playing at a later time</p>
-        <div><buttom id="game-start">Continue playing</buttom></div>
-        </div>
-        `;
-  const game_start = document.getElementById('game-start');
-  playing = false;
-  game_start.onclick = function () {
-    instructions.innerHTML = '';
-    playing = true;
-  };
-}
-
-function keepMoving() {
-  // If there is only one position to go moves to that position
-  const { hwalls } = maze;
-  const { vwalls } = maze;
-  const M = vwalls.length;
-  const N = hwalls.length;
-  let hits = 0;
-  let sNext = '';
-  if (userY !== 0 && !hwalls[userX][userY - 1] && sLastArrow !== 'ArrowDown') {
-    hits++;
-    sNext = 'ArrowUp';
-  }
-  if (userY !== M - 1 && !hwalls[userX][userY] && sLastArrow !== 'ArrowUp') {
-    hits++;
-    sNext = 'ArrowDown';
-  }
-  if (userX !== N - 1 && !vwalls[userY][userX] && sLastArrow !== 'ArrowLeft') {
-    hits++;
-    sNext = 'ArrowRight';
-  }
-  if (userX !== 0 && !vwalls[userY][userX - 1] && sLastArrow !== 'ArrowRight') {
-    hits++;
-    sNext = 'ArrowLeft';
-  }
-  if (hits === 1) {
-    processEvent(sNext);
-    setTimeout(keepMoving, 100);
-  }
-}
-
-document.addEventListener('keydown', (event) => {
-  if (!playing) {
-    if (event.key === 'Enter') {
-      // hacky!
-      document.getElementById('game-start').click();
-    }
-    return;
-  }
-  processEvent(event.key);
-  if (['ArrowUp', 'ArrowDown', 'ArrowRight', 'ArrowUp'].includes(event.key)) {
-    event.preventDefault();
-  }
-}, false);
-let sLastArrow = '';
-
-function processEvent(sEventName) {
-  const { hwalls } = maze;
-  const { vwalls } = maze;
-  const M = vwalls.length;
-  const N = hwalls.length;
-  clearLittleGuy();
-  sLastArrow = sEventName;
-  switch (sEventName) {
-    case 'ArrowUp':
-      if (userY !== 0 && !hwalls[userX][userY - 1]) {
-        userY--;
-      }
-      break;
-    case 'ArrowDown':
-      if (userY !== M - 1 && !hwalls[userX][userY]) {
-        userY++;
-      }
-      break;
-    case 'ArrowRight':
-      if (userX !== N - 1 && !vwalls[userY][userX]) {
-        userX++;
-      }
-      break;
-    case 'ArrowLeft':
-      if (userX !== 0 && !vwalls[userY][userX - 1]) {
-        userX--;
-      }
-      break;
-    case 'End':
-      // Backdoor
-      userX = N - 1;
-      userY = M - 1;
-      break;
-    case 'Enter':
-      // pass
-      break;
-    case 'Escape':
-      resetGame();
-      break;
-    case ' ':
-      saveData();
-      pauseGame();
-      break;
-    default:
-      console.log('Key pressed: ', sEventName);
-      break;
-  }
-  drawLittleGuy();
-  if (userX === N - 1 && userY === M - 1) {
-    nextLevel();
-  }
-}
-
-function startGame() {
-  playing = true;
-  drawLittleGuy();
-}
-
-function clearLittleGuy() {
-  ctx.strokeStyle = '#fff';
-  ctx.fillStyle = '#fff';
-  ctx.beginPath();
-  ctx.fillRect(userX * dx + 1, userY * dy + 1, dx - 2, dy - 2);
-
-  if (mode === 2) {
-    // probably a bit too much :/
-    cleardevice();
-  }
-  ctx.stroke();
-}
-function drawLittleGuy() {
-  const R = dx * 0.1;
-  ctx.strokeStyle = '#ccc';
-  ctx.fillStyle = '#ccc';
-  ctx.beginPath();
-  ctx.arc(userX * dx + dx / 2, userY * dy + dy / 2, R, 0, Math.PI * 2, true);
-  ctx.fill();
-  ctx.stroke();
-  if (mode !== 0) {
-    const { hwalls } = maze;
-    const { vwalls } = maze;
-    const M = vwalls.length;
-    const N = hwalls.length;
-    ctx.beginPath();
-    ctx.strokeStyle = '#000';
-    if (userX !== 0 && vwalls[userY][userX - 1]) {
-      line(userX * dx, userY * dy, userX * dx, userY * dy + dy);
-    }
-    if (userY !== 0 && hwalls[userX][userY - 1]) {
-      line(userX * dx, userY * dy, userX * dx + dx, userY * dy);
-    }
-    if (userX !== N - 1 && vwalls[userY][userX]) {
-      line(userX * dx + dx, userY * dy, userX * dx + dx, userY * dy + dy);
-    }
-    if (userY !== M - 1 && hwalls[userX][userY]) {
-      line(userX * dx, userY * dy + dy, userX * dx + dx, userY * dy + dy);
-    }
-
-    ctx.stroke();
-  }
-}
-function line(x1, y1, x2, y2) {
-  ctx.moveTo(x1, y1);
-  ctx.lineTo(x2, y2);
-}
-
-function changeMode() {
-  // mode cycles throw:
-  // (0) light,
-  // (1) you see where you have been,
-  // (2) you only see where you are
-  let totalTime; let width; let
-    height;
-  mode = (level - 1) % 3;
+function getLevelSettings(level) {
+  let totalTime;
+  let width;
+  let height;
   switch (level) {
     case 1:
       totalTime = 30;
@@ -323,176 +66,254 @@ function changeMode() {
   };
 }
 
-function drawMaze() {
-  let i; let j;
-  const { hwalls } = maze;
-  const { vwalls } = maze;
-  const N = hwalls.length;
-  const M = vwalls.length;
-  cleardevice();
-  ctx.beginPath();
-  ctx.strokeStyle = '#000';
-  // border
-  line(0, 0, canvasWidth, 0);
-  line(canvasWidth, 0, canvasWidth, canvasHeight);
-  line(canvasWidth, canvasHeight, 0, canvasHeight);
-  line(0, canvasHeight, 0, 0);
-  if (mode !== 0) {
-    return;
-  }
-  for (j = 0; j < M; j++) {
-    for (i = 0; i < N; i++) {
-      if (vwalls[j][i]) {
-        line(dx + dx * i, dy * j, dx + dx * i, dy * j + dy);
-      }
-    }
-  }
-  for (i = 0; i < N; i++) {
-    for (j = 0; j < M; j++) {
-      if (hwalls[i][j]) {
-        line(dx * i, dy * j + dy, dx + dx * i, dy * j + dy);
-      }
-    }
-  }
-  ctx.stroke();
-}
-
-function createLabyrinth(N, M) {
-  // vertical walls
-  const vwalls = new Array(M);
-  for (let j = 0; j < M; j++) {
-    vwalls[j] = new Array(N - 1);
-    for (let i = 0; i < N - 1; i++) {
-      vwalls[j][i] = true;
-    }
-  }
-  // horizontal walls
-  const hwalls = new Array(N);
-  for (let i = 0; i < N; i++) {
-    hwalls[i] = new Array(M - 1);
-    for (let j = 0; j < M - 1; j++) {
-      hwalls[i][j] = true;
-    }
-  }
-  // The wall to the right in square (i, j) would be:
-  // vwalls[j][i]
-  // The wall down to (i, j) would be
-  // hwalls[i][j]
-  let x = N - 1; let
-    y = M - 1;
-  const stack = [{ x, y }];
-  let iVisited = 1;
-  const square = new Array(N);
-  for (let i = 0; i < N * M; i++) {
-    square[i] = new Array(M);
-    for (let j = 0; j < M; j++) {
-      square[i][j] = false;
-    }
-  }
-  square[x][y] = true;
-  while (iVisited < N * M) {
-    if ((x === 0 || square[x - 1][y])
-                && (x === N - 1 || square[x + 1][y])
-                && (y === 0 || square[x][y - 1])
-                && (y === M - 1 || square[x][y + 1])) {
-      const sq = stack.pop();
-      x = sq.x;
-      y = sq.y;
-    } else {
-      let bMoved = false;
-      while (!bMoved) {
-        const iDirection = Math.floor(Math.random() * 4);
-        switch (iDirection) {
-          case 0: // DOWN
-            if (y !== M - 1 && square[x][y + 1] !== true) {
-              hwalls[x][y] = false;
-              y++;
-              bMoved = true;
-            }
-            break;
-          case 1: // UP
-            if (y !== 0 && square[x][y - 1] !== true) {
-              y--;
-              hwalls[x][y] = false;
-              bMoved = true;
-            }
-            break;
-          case 2: // RIGHT
-            if (x !== N - 1 && square[x + 1][y] !== true) {
-              vwalls[y][x] = false;
-              x++;
-              bMoved = true;
-            }
-            break;
-          case 3: // LEFT
-            if (x !== 0 && square[x - 1][y] !== true) {
-              x--;
-              vwalls[y][x] = false;
-              bMoved = true;
-            }
-            break;
-          default:
-            break;
-        }
-      }
-      stack.push({ x, y });
-      square[x][y] = true;
-      iVisited++;
-    }
-  }
-
-  maze = {
-    hwalls,
-    vwalls,
-  };
-}
-
-function nextLevel() {
+const Maze = class {
   playing = false;
-  const instructions = document.getElementById('instructions');
-  instructions.innerHTML = `<div>
+
+  // Class variables
+
+  // mazeData => set of horizontal and vertical walls
+  // userX, userY => position of the 'little guy'
+  // mazeCanvas => class instance representing the maze
+  // level
+  // playing => true if we are playing the game
+
+  // lastEventName => last arrow key pressed
+
+  constructor(id, width, height) {
+    this.mazeCanvas = new MazeCanvas(id, width, height);
+
+    const arrows = document.getElementById('arrow-keys');
+    if (window.innerWidth > 850) {
+      arrows.style.display = 'none';
+    } else {
+      arrows.onclick = (event) => {
+        const dispatchEvent = {
+          'up-key': 'ArrowUp',
+          'down-key': 'ArrowDown',
+          'left-key': 'ArrowLeft',
+          'right-key': 'ArrowRight',
+        };
+        this.processEvent(dispatchEvent[event.target.id]);
+        setTimeout(this.keepMoving, 100);
+      };
+    }
+    this.playing = false;
+    this.loadData();
+    this.greeting();
+
+    document.addEventListener(
+      'keydown',
+      (event) => {
+        if (!this.playing) {
+          if (event.key === 'Enter') {
+            // hacky!
+            document.getElementById('game-start').click();
+          }
+          return;
+        }
+        this.processEvent(event.key);
+        if (['ArrowUp', 'ArrowDown', 'ArrowRight', 'ArrowUp'].includes(event.key)) {
+          event.preventDefault();
+        }
+      },
+      false,
+    );
+    this.lastEventName = '';
+  }
+
+  loadData() {
+    if (localStorage.getItem('data')) {
+      const data = JSON.parse(localStorage.getItem('data'));
+      this.mazeData = data.mazeData;
+      this.level = data.level;
+      this.userX = data.userX;
+      this.userY = data.userY;
+    } else {
+      this.level = 1;
+      this.userX = 0;
+      this.userY = 0;
+      const opts = getLevelSettings(1);
+      this.mazeData = createLabyrinth(opts.N, opts.M);
+    }
+  }
+
+  saveData() {
+    // level, maze, user_x, user_y
+    const data = {
+      mazeData: this.mazeData,
+      level: this.level,
+      userX: this.userX,
+      userY: this.userY,
+    };
+    localStorage.setItem('data', JSON.stringify(data));
+  }
+
+  resetGame() {
+    this.level = 1;
+    this.userX = 0;
+    this.userY = 0;
+    const opts = getLevelSettings(this.level);
+    this.mazeData = createLabyrinth(opts.N, opts.M);
+    localStorage.removeItem('data');
+    this.playing = false;
+    this.greeting();
+  }
+
+  pauseGame() {
+    const instructions = document.getElementById('instructions');
+    instructions.innerHTML = `<div><h1>Pause</h1>
+        <p>Your game is paused. You can close your window and keep playing at a later time</p>
+        <div><button id="game-start">Continue playing</button></div>
+        </div>
+        `;
+    const gameStartButton = document.getElementById('game-start');
+    this.playing = false;
+    gameStartButton.onclick = () => {
+      instructions.innerHTML = '';
+      this.playing = true;
+    };
+  }
+
+  keepMoving() {
+    // Keeps the little guy moving while there is only one posibility
+    // Useful when there is no keyboard
+    const { hWalls, vWalls } = this.mazeData;
+    const M = vWalls.length;
+    const N = hWalls.length;
+    let hits = 0;
+    const { userX, userY } = this;
+
+    let sNext = '';
+    if (userY !== 0 && !hWalls[userX][userY - 1] && this.lastEventName !== 'ArrowDown') {
+      hits++;
+      sNext = 'ArrowUp';
+    }
+    if (userY !== M - 1 && !hWalls[userX][userY] && this.lastEventName !== 'ArrowUp') {
+      hits++;
+      sNext = 'ArrowDown';
+    }
+    if (userX !== N - 1 && !vWalls[userY][userX] && this.lastEventName !== 'ArrowLeft') {
+      hits++;
+      sNext = 'ArrowRight';
+    }
+    if (userX !== 0 && !vWalls[userY][userX - 1] && this.lastEventName !== 'ArrowRight') {
+      hits++;
+      sNext = 'ArrowLeft';
+    }
+    if (hits === 1) {
+      this.processEvent(sNext);
+      setTimeout(this.keepMoving, 100);
+    }
+  }
+
+  processEvent(eventName) {
+    const { hWalls, vWalls } = this.mazeData;
+    const { userX, userY } = this;
+    const M = vWalls.length;
+    const N = hWalls.length;
+    this.mazeCanvas.clearLittleGuy(userX, userY);
+    this.lastEventName = eventName;
+    switch (eventName) {
+      case 'ArrowUp':
+        if (userY !== 0 && !hWalls[userX][userY - 1]) {
+          this.userY = userY - 1;
+        }
+        break;
+      case 'ArrowDown':
+        if (userY !== M - 1 && !hWalls[userX][userY]) {
+          this.userY = userY + 1;
+        }
+        break;
+      case 'ArrowRight':
+        if (userX !== N - 1 && !vWalls[userY][userX]) {
+          this.userX = userX + 1;
+        }
+        break;
+      case 'ArrowLeft':
+        if (userX !== 0 && !vWalls[userY][userX - 1]) {
+          this.userX = userX - 1;
+        }
+        break;
+      case 'End':
+        // Backdoor
+        this.userX = N - 1;
+        this.userY = M - 1;
+        break;
+      case 'Enter':
+        // pass
+        break;
+      case 'Escape':
+        this.resetGame();
+        break;
+      case ' ':
+        this.saveData();
+        this.pauseGame();
+        break;
+      default:
+        console.log('Key pressed: ', eventName);
+        break;
+    }
+    this.mazeCanvas.drawLittleGuy(this.userX, this.userY);
+    if (this.userX === N - 1 && this.userY === M - 1) {
+      this.nextLevel();
+    }
+  }
+
+  startGame() {
+    this.playing = true;
+    this.mazeCanvas.drawLittleGuy(this.userX, this.userY);
+  }
+
+  playGame() {
+    // mode cycles throw:
+    // (0) light,
+    // (1) you see where you have been,
+    // (2) you only see where you are
+    const mode = (this.level - 1) % 3;
+    this.mazeCanvas.drawMaze(this.mazeData, mode);
+    this.startGame();
+  }
+
+  nextLevel() {
+    this.playing = false;
+    const instructions = document.getElementById('instructions');
+    instructions.innerHTML = `<div>
         <h1>Congratulations!</h1>
-        <p>You passed level ${level}</p>
+        <p>You passed level ${this.level}</p>
         <p>Click "Next" to the next level
         </p>
-        <div><buttom id="game-start">Next Level</buttom></div>
+        <div><button id="game-start">Next Level</button></div>
         </div>`;
-  const gameStartButton = document.getElementById('game-start');
+    const gameStartButton = document.getElementById('game-start');
 
-  gameStartButton.onclick = () => {
-    instructions.innerHTML = '';
-    level++;
-    userX = 0;
-    userY = 0;
-    const opts = changeMode(level);
-    dx = canvasWidth / opts.N;
-    dy = canvasHeight / opts.M;
-    createLabyrinth(opts.N, opts.M);
-    playGame();
-  };
-}
+    gameStartButton.onclick = () => {
+      instructions.innerHTML = '';
+      this.level++;
+      this.userX = 0;
+      this.userY = 0;
+      const opts = getLevelSettings(this.level);
+      this.mazeData = createLabyrinth(opts.N, opts.M);
+      this.playGame();
+    };
+  }
 
-function greeting() {
-  const instructions = document.getElementById('instructions');
-  instructions.innerHTML = `<div><h1> Instructions</h1>
+  greeting() {
+    const instructions = document.getElementById('instructions');
+    instructions.innerHTML = `<div><h1> Instructions</h1>
         <p>You should move the little guy (small circle) in the upper left of the maze all to the way out in the lower right corner.
         </p>
         <p>You should use the arrow keys in your keyboard</p>
-        <p>Go to level ${level}!</p>
+        <p>Go to level ${this.level}!</p>
         <p>Press "space bar" to pause and save the game and "escape" to reset</p>
-        <div><buttom id="game-start">Start</buttom></div>
+        <div><button id="game-start">Start</button></div>
         </div>
         `;
-  const gameStartButton = document.getElementById('game-start');
-  gameStartButton.onclick = () => {
-    instructions.innerHTML = '';
-    playGame();
-  };
-}
+    const gameStartButton = document.getElementById('game-start');
+    gameStartButton.onclick = () => {
+      instructions.innerHTML = '';
+      this.playGame();
+    };
+  }
+};
 
-function playGame() {
-  drawMaze();
-  startGame();
-}
-
-export default start;
+export default Maze;

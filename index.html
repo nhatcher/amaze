@@ -12,9 +12,9 @@
 
     <link rel="stylesheet" type="text/css" media="screen" href="general.css" />
     <script type="module">
-        import start from './maze.js';
-        document.addEventListener("DOMContentLoaded", function(event) {
-            start('main-canvas', 800, 600);
+        import Maze from './maze.js';
+        document.addEventListener("DOMContentLoaded", (event) => {
+            new Maze('main-canvas', 800, 600);
         });
     </script>
 </head>
