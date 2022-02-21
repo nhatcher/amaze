@@ -94,7 +94,7 @@ const Maze = class {
           'right-key': 'ArrowRight',
         };
         this.processEvent(dispatchEvent[event.target.id]);
-        setTimeout(this.keepMoving, 100);
+        setTimeout(() => this.keepMoving(), 100);
       };
     }
     this.playing = false;
@@ -175,7 +175,7 @@ const Maze = class {
   }
 
   keepMoving() {
-    // Keeps the little guy moving while there is only one posibility
+    // Keeps the little guy moving while there is only one possibility
     // Useful when there is no keyboard
     const { hWalls, vWalls } = this.mazeData;
     const M = vWalls.length;
@@ -202,7 +202,7 @@ const Maze = class {
     }
     if (hits === 1) {
       this.processEvent(sNext);
-      setTimeout(this.keepMoving, 100);
+      setTimeout(() => this.keepMoving(), 100);
     }
   }
 
